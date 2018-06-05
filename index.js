@@ -110,6 +110,9 @@ async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestam
       }
 
       _.forEach(values, (value, index) => {
+        if (timestamps[index] < startTimestamp || timestamps[index] >= endTimestamp) {
+          return
+        }
         result[key].push({timestamp: timestamps[index], value: value})
       })
     })
