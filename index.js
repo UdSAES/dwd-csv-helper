@@ -93,9 +93,17 @@ async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestam
   const result = {}
   while (dayTimestamp < endTimestamp) {
     const filePath = deriveCsvFilePath(csvBasePath, 'REPORT', dayTimestamp, stationId)
-    const fileContent = await fs.readFile(filePath, {
-      encoding: 'utf8'
-    })
+    let fileContent
+    try {
+      fileContent = await fs.readFile(filePath, {
+        encoding: 'utf8'
+      })
+    } catch (error) {
+      console.log(dayTimestamp, error)
+      dayTimestamp += 86400 * 1000
+      continue
+    }
+
 
     const partialTimeseries = parseCsvFile(fileContent)
 
@@ -113,7 +121,10 @@ async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestam
         if (timestamps[index] < startTimestamp || timestamps[index] >= endTimestamp) {
           return
         }
-        result[key].push({timestamp: timestamps[index], value: value})
+        result[key].push({
+          timestamp: timestamps[index],
+          value: value
+        })
       })
     })
     dayTimestamp += 86400 * 1000
