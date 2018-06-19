@@ -1,3 +1,19 @@
+// dwd-csv-helper
+//
+// Copyright 2018 The dwd-csv-helper Developers. See the LICENSE file at
+// the top-level directory of this distribution and at
+// https://github.com/UdSAES/dwd-csv-helper/LICENSE
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+//
+// dwd-csv-helper may be freely used and distributed under the ISC license
+
 'use strict'
 
 const _ = require('lodash')
