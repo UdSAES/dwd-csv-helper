@@ -1,6 +1,6 @@
 {
   "name": "dwd-csv-helper",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Helper package for DWD csv files downloaded by dwd_data_crawler\"",
   "main": "index.js",
   "scripts": {
