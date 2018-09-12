@@ -20,6 +20,8 @@ const _ = require('lodash')
 const moment = require('moment')
 const path = require('path')
 const fs = require('fs-extra')
+const parser = require('xml-js')
+const util = require('util')
 
 const COLUMN_SEPARATOR = ';'
 
@@ -103,6 +105,23 @@ function parseCsvFile(fileContent) {
   return result
 }
 
+async function parseKmzFile(fileContent) {
+  let xml2jsOptions = {
+    compact: true,
+    ignoreComment: true,
+    alwaysChildren: true
+  }
+  let kmzFileJS = await parser.xml2js(fileContent, xml2jsOptions)
+  // let kmzFileJSON = await parser.xml2json(fileContent, xml2jsOptions)
+  // await fs.writeFile(
+  //   path.join(__dirname, 'kmzFileJSONcompact.json'),
+  //   kmzFileJSON,
+  //   {encoding: 'utf8'}
+  // )
+
+  return kmzFileJS
+}
+
 async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestamp, stationId) {
   let dayTimestamp = moment.utc(startTimestamp).startOf('day').valueOf()
 
@@ -155,6 +174,7 @@ async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestam
 }
 
 async function readTimeseriesDataMosmix(csvBasePath, startTimestamp, stationId) {
+  // TODO: ensure that not only the 6 o'clock-run is used but the others as well
   let dayTimestamp = moment.utc(startTimestamp).startOf('day').add(6, 'hours').valueOf()
 
   const filePath = deriveCsvFilePath(csvBasePath, 'MOSMIX', dayTimestamp, stationId)
@@ -189,6 +209,34 @@ async function readTimeseriesDataMosmix(csvBasePath, startTimestamp, stationId) 
   })
   return result
 }
+
+async function main() {
+  let stationId = '01001' // Jan Mayen
+  let startTimestamp = moment([2018, 8, 12]).valueOf() // now, UNIX EPOCH in ms resolution
+  let basePath = '/home/moritz/tmp/crawler/weather/local_forecasts'
+  let csvBasePath = path.join(basePath, 'poi')
+  let csvFile = path.join(basePath, 'poi', '2018091106', '01001-MOSMIX.csv')
+  // let kmzFile = path.join(basePath, '2018091103', '01001-MOSMIX.kmz')
+  let kmzFile = path.join(basePath, 'mos', '2018091103', 'MOSMIX_L_2018091103_01001.kml')
+  console.log(csvFile)
+  console.log(kmzFile)
+
+  const exists = await fs.pathExists(kmzFile) && await fs.pathExists(csvFile)
+  if (!exists) {
+    exit(1)
+  }
+
+  let kmzFileXML = await fs.readFile(kmzFile, 'utf8')
+  let resultKMZ = await parseKmzFile(kmzFileXML)
+  console.log(resultKMZ)
+  // console.log(util.inspect(resultKMZ, false, null))
+
+  let resultCSV = await readTimeseriesDataMosmix(csvBasePath, startTimestamp, stationId)
+  console.log(resultCSV)
+  // console.log(util.inspect(resultCSV, false, null))
+}
+
+main()
 
 exports.parseCsvFile = parseCsvFile
 exports.deriveCsvFilePath = deriveCsvFilePath
