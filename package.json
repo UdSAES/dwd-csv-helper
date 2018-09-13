@@ -6,7 +6,14 @@
   "scripts": {
     "test": "./node_modules/standard/bin/cmd.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UdSAES/dwd-csv-helper.git"
+  },
   "author": "Florian Wagner <florian.wagner@aut.uni-saarland.de>",
+  "contributors": [
+      "Moritz Stüber <moritz.stueber@aut.uni-saarland.de>"
+  ],
   "license": "ISC",
   "dependencies": {
     "child-process-promise": "^2.2.1",
