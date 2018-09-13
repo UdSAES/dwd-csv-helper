@@ -21,27 +21,39 @@ const moment = require('moment')
 const path = require('path')
 const fs = require('fs-extra')
 const parser = require('xml-js')
-const util = require('util')
+const exec = require('child-process-promise').exec
+const tmp = require('tmp-promise')
 
 const COLUMN_SEPARATOR = ';'
 
 
 function deriveCsvFilePath(csvBasePath, type, timestamp, stationId) {
   let formatString
+  let contentType
   let extension
+  let subdir
 
   if (type === 'REPORT') {
     formatString = 'YYYYMMDD'
-    extension = 'BEOB'
+    contentType = 'BEOB'
+    extension = '.csv'
+    subdir = 'poi'
+  } else if (type === 'MOSMIX_KMZ'){
+    formatString = 'YYYYMMDDHH'
+    contentType = 'MOSMIX'
+    extension = '.kml'
+    subdir = 'mos'
   } else {
     formatString = 'YYYYMMDDHH'
-    extension = 'MOSMIX'
+    contentType = 'MOSMIX'
+    extension = '.csv'
+    subdir = 'poi'
   }
 
   const dayDateTimeString = moment.utc(timestamp).format(formatString)
-  const fileName = stationId + '-' + extension + '.csv'
+  const fileName = stationId + '-' + contentType + extension
 
-  return path.join(csvBasePath, dayDateTimeString, fileName)
+  return path.join(csvBasePath, subdir, dayDateTimeString, fileName)
 }
 
 function parseCsvFile(fileContent) {
@@ -210,65 +222,133 @@ async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestam
   return result
 }
 
-async function readTimeseriesDataMosmix(csvBasePath, startTimestamp, stationId) {
-  // TODO: ensure that not only the 6 o'clock-run is used but the others as well
-  let dayTimestamp = moment.utc(startTimestamp).startOf('day').add(6, 'hours').valueOf()
+async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationId) {
+  let dayTimestamp
+  let filePath
+  let fileContent
+  let partialTimeseries
+  let result = {}
 
-  const filePath = deriveCsvFilePath(csvBasePath, 'MOSMIX', dayTimestamp, stationId)
-  const fileContent = await fs.readFile(filePath, {
-    encoding: 'utf8'
-  })
+  if (startTimestamp < moment.utc([2018, 8, 12,]).valueOf()) {
+    // TODO: ensure that not only the 6 o'clock-run is used but the others as well
+    dayTimestamp = moment.utc(startTimestamp).startOf('day').add(6, 'hours').valueOf()
+    filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX', dayTimestamp, stationId)
+    fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
+    partialTimeseries = parseCsvFile(fileContent)
 
-  const result = {}
-  const partialTimeseries = parseCsvFile(fileContent)
-  const timestamps = partialTimeseries['timestamp']
-  _.forEach(partialTimeseries, (values, key) => {
-    if (key === 'timestamp') {
-      return
-    }
+    const timestamps = partialTimeseries['timestamp']
+    _.forEach(partialTimeseries, (values, key) => {
+      if (key === 'timestamp') {
+        return
+      }
 
-    if (_.isNil(result[key])) {
-      result[key] = []
-    }
-
-    _.forEach(values, (value, index) => {
-      result[key].push({
-        timestamp: timestamps[index],
-        value: value
+      _.forEach(values, (value, index) => {
+        // Perform conversion to new format
+        switch (key) {
+          case 'TT':
+            let newKeyTT = 'TTT'
+            if (_.isNil(result[newKeyTT])) {
+              result[newKeyTT] = []
+            }
+            result[newKeyTT].push({
+              timestamp: timestamps[index],
+              value: value + 273.15 // °C to K
+            })
+            break
+          case 'PPPP':
+            if (_.isNil(result[key])) {
+              result[key] = []
+            }
+            result[key].push({
+              timestamp: timestamps[index],
+              value: value * 100 // hPa to Pa
+            })
+            break
+          case 'Td':
+            if (_.isNil(result[key])) {
+              result[key] = []
+            }
+            result[key].push({
+              timestamp: timestamps[index],
+              value: value + 273.15 // °C to K
+            })
+            break
+          case 'ff':
+            let newKeyff = 'FF'
+            if (_.isNil(result[newKeyff])) {
+              result[newKeyff] = []
+            }
+            result[newKeyff].push({
+              timestamp: timestamps[index],
+              value: value / 3.6 // km/h to m/s
+            })
+            break
+          case 'dd':
+            let newKeydd = 'DD'
+            if (_.isNil(result[newKeydd])) {
+              result[newKeydd] = []
+            }
+            result[newKeydd].push({
+              timestamp: timestamps[index],
+              value: value
+            })
+            break
+          // ..unless nothing has changed, which has to be found by manually
+          // comparing MetElementDefinition.xml to the headings inside a .csv
+          default:
+          if (_.isNil(result[key])) {
+            result[key] = []
+          }
+            result[key].push({
+              timestamp: timestamps[index],
+              value: value
+            })
+        }
       })
     })
-  })
 
-  _.forEach(result, (item, key) => {
-    result[key] = _.sortBy(item, (item) => {
-      return item.timestamp
+    _.forEach(result, (item, key) => {
+      result[key] = _.sortBy(item, (item) => {
+        return item.timestamp
+      })
     })
-  })
+  } else {
+    dayTimestamp = moment.utc(startTimestamp).startOf('day').add(3, 'hours').valueOf()
+    filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX_KMZ', dayTimestamp, stationId)
+    const fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
+    // console.log('fileContent: ', fileContent)
+    result = await parseKmzFile(fileContent)
+  }
+
   return result
 }
 
 async function main() {
   let stationId = '01001' // Jan Mayen
-  let startTimestamp = moment([2018, 8, 12]).valueOf() // now, UNIX EPOCH in ms resolution
+  let startTimestamp = moment.utc([2018, 8, 12]).valueOf()
+  let startTimestampCSV = moment.utc([2018, 8, 11]).valueOf()
   let basePath = '/home/moritz/tmp/crawler/weather/local_forecasts'
-  let csvBasePath = path.join(basePath, 'poi')
+  // let csvBasePath = path.join(basePath, 'poi')
+  // let mosBasePath = path.join(basePath, 'mos')
   let csvFile = path.join(basePath, 'poi', '2018091106', '01001-MOSMIX.csv')
   // let kmzFile = path.join(basePath, '2018091103', '01001-MOSMIX.kmz')
-  let kmzFile = path.join(basePath, 'mos', '2018091103', 'MOSMIX_L_2018091103_01001.kml')
+  let kmzFile = path.join(basePath, 'mos', '2018091203', '01001-MOSMIX.kml')
   console.log(csvFile)
   console.log(kmzFile)
 
   const exists = await fs.pathExists(kmzFile) && await fs.pathExists(csvFile)
   if (!exists) {
-    exit(1)
+    console.log('files do not exist, I am outta here')
+    process.exit(1)
   }
 
-  let kmzFileXML = await fs.readFile(kmzFile, 'utf8')
-  let resultKMZ = await parseKmzFile(kmzFileXML)
+  // let kmzFileXML = await fs.readFile(kmzFile, 'utf8')
+  // let resultKMZ = await parseKmzFile(kmzFileXML)
+  let resultKMZ = await readTimeseriesDataMosmix(basePath, startTimestamp, stationId)
   console.log(resultKMZ)
   // console.log(util.inspect(resultKMZ, false, null))
 
-  let resultCSV = await readTimeseriesDataMosmix(csvBasePath, startTimestamp, stationId)
+  let resultCSV = await readTimeseriesDataMosmix(basePath, startTimestampCSV, stationId)
   console.log(resultCSV)
   // console.log(util.inspect(resultCSV, false, null))
 }
