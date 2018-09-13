@@ -26,8 +26,7 @@ const tmp = require('tmp-promise')
 
 const COLUMN_SEPARATOR = ';'
 
-
-function deriveCsvFilePath(csvBasePath, type, timestamp, stationId) {
+function deriveCsvFilePath (csvBasePath, type, timestamp, stationId) {
   let formatString
   let contentType
   let extension
@@ -38,7 +37,7 @@ function deriveCsvFilePath(csvBasePath, type, timestamp, stationId) {
     contentType = 'BEOB'
     extension = '.csv'
     subdir = 'poi'
-  } else if (type === 'MOSMIX_KMZ'){
+  } else if (type === 'MOSMIX_KMZ') {
     formatString = 'YYYYMMDDHH'
     contentType = 'MOSMIX'
     extension = '.kmz'
@@ -56,7 +55,7 @@ function deriveCsvFilePath(csvBasePath, type, timestamp, stationId) {
   return path.join(csvBasePath, subdir, dayDateTimeString, fileName)
 }
 
-function parseCsvFile(fileContent) {
+function parseCsvFile (fileContent) {
   fileContent = fileContent.replace(/\r\n/g, '\n')
 
   const lines = fileContent.split('\n')
@@ -91,7 +90,6 @@ function parseCsvFile(fileContent) {
         values[index].push(parseFloat(value.replace(',', '.')))
       }
     })
-
   })
 
   const result = {}
@@ -117,7 +115,7 @@ function parseCsvFile(fileContent) {
   return result
 }
 
-async function parseKmlFile(fileContent) {
+async function parseKmlFile (fileContent) {
   // Read the .kml-file
   let xml2jsOptions = {
     compact: true,
@@ -149,10 +147,10 @@ async function parseKmlFile(fileContent) {
     if (forecastTimeSteps.length === data.length) {
       let forecast = []
       for (let i = 0; i < data.length; i++) {
-          forecast.push({
-            timestamp: forecastTimeSteps[i],
-            value: data[i]
-          })
+        forecast.push({
+          timestamp: forecastTimeSteps[i],
+          value: data[i]
+        })
       }
 
       let key = forecastData[i]['_attributes']['dwd:elementName']
@@ -163,7 +161,7 @@ async function parseKmlFile(fileContent) {
   return forecastCollection
 }
 
-async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestamp, stationId) {
+async function readTimeseriesDataReport (csvBasePath, startTimestamp, endTimestamp, stationId) {
   let dayTimestamp = moment.utc(startTimestamp).startOf('day').valueOf()
 
   const result = {}
@@ -179,7 +177,6 @@ async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestam
       dayTimestamp += 86400 * 1000
       continue
     }
-
 
     const partialTimeseries = parseCsvFile(fileContent)
 
@@ -214,7 +211,7 @@ async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestam
   return result
 }
 
-async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationId) {
+async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, stationId) {
   let dayTimestamp
   let filePath
   let fileContent
@@ -222,7 +219,7 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
   let result = {}
 
   // Take care of the fact that DWD stopped providing .csv-files on 2018-09-17
-  if (startTimestamp < moment.utc([2018, 8, 12,]).valueOf()) {
+  if (startTimestamp < moment.utc([2018, 8, 12]).valueOf()) {
     // TODO: ensure that not only the 6 o'clock-run is used but the others as well
     dayTimestamp = moment.utc(startTimestamp).startOf('day').add(6, 'hours').valueOf()
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX', dayTimestamp, stationId)
@@ -289,9 +286,9 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
           // ..unless nothing has changed, which has to be found by manually
           // comparing MetElementDefinition.xml to the headings inside a .csv
           default:
-          if (_.isNil(result[key])) {
-            result[key] = []
-          }
+            if (_.isNil(result[key])) {
+              result[key] = []
+            }
             result[key].push({
               timestamp: timestamps[index],
               value: value
@@ -313,7 +310,7 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
     // Unzip the .kmz-file
     const tmpFile = await tmp.file()
     const execCommand = 'unzip -p ' + filePath + ' > ' + tmpFile.path
-    const statusOfExecCommand = await exec(execCommand)
+    await exec(execCommand)
     const fileContent = await fs.readFile(tmpFile.path, { encoding: 'utf8' })
     tmpFile.cleanup()
 
@@ -323,7 +320,7 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
   return result
 }
 
-async function main() {
+async function main () {
   let stationId = '01001' // Jan Mayen
   let startTimestamp = moment.utc([2018, 8, 12]).valueOf()
   let startTimestampCSV = moment.utc([2018, 8, 11]).valueOf()
