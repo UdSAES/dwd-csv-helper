@@ -1,5 +1,5 @@
 # dwd-csv-helper
-`dwd-csv-helper` is a tiny helper package to extract timeseries data from .csv- and .kmz-files that have been downloaded by the `dwd_data_crawler` service.
+`dwd-csv-helper` is a tiny helper package to extract timeseries data from .csv- and .kmz-files that have been downloaded by the [microservice `dwd_data_crawler`](https://github.com/UdSAES/dwd_data_crawler).
 
 The package is being developed and maintained by the [Chair of Automation and Energy Systems](https://www.uni-saarland.de/en/lehrstuhl/frey/start.html) at the [Saarland University](https://www.uni-saarland.de/nc/en/home.html).
 
@@ -67,7 +67,7 @@ main()
 ### readTimeseriesDataMosmix
 * Purpose:
     * Asynchronously extract a timeseries of forecast data for a given reference time for a given station ID
-    * Take care of the fact that the [format in which the MOSMIX-forecasts are provided by DWD changed on 2018-09-17](https://www.dwd.de/DE/leistungen/opendata/neuigkeiten/opendata_jul2018_01.html).
+    * Take care of the fact that the [format in which the MOSMIX-forecasts are provided by DWD changed on 2018-09-17](https://www.dwd.de/DE/leistungen/opendata/neuigkeiten/opendata_jul2018_02.html).
 * Arguments:
   1. (`String`): path to the directory comprising the directories for the individual forecasts (e.g. `'SOME_PATH/weather/local_forecasts/poi'`)
   2. (`Number`): the reference timestamp of the forecast timeseries to be extracted as UNIX EPOCH in ms resolution (e.g. `1529301600000` for 2018-06-18 06:00 UTC)
