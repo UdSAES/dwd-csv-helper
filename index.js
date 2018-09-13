@@ -106,6 +106,9 @@ function parseCsvFile(fileContent) {
 }
 
 async function parseKmzFile(fileContent) {
+  // Unzip the .kmz-file
+
+  // Read the .kml-file
   let xml2jsOptions = {
     compact: true,
     ignoreComment: true,
@@ -119,7 +122,41 @@ async function parseKmzFile(fileContent) {
   //   {encoding: 'utf8'}
   // )
 
-  return kmzFileJS
+  // Build the expected object containing all the data
+  let forecastCollection = {}
+
+  let forecastTimeSteps = kmzFileJS['kml:kml']['kml:Document']['kml:ExtendedData']['dwd:ProductDefinition']['dwd:ForecastTimeSteps']['dwd:TimeStep']
+  forecastTimeSteps = _.map(forecastTimeSteps, (item) => {
+    return moment(item._text).valueOf()
+  })
+
+  let forecastData = kmzFileJS['kml:kml']['kml:Document']['kml:Placemark']['kml:ExtendedData']['dwd:Forecast']
+  for (let i = 0; i < forecastData.length; i++) {
+    let data = _.flatMap(forecastData[i]['dwd:value'], (stringOfValues) => {
+      let separator = ';'
+      stringOfValues = _.replace(_.trimStart(stringOfValues), /(\s+)/g, separator)
+      let listOfValues = _.split(stringOfValues, separator)
+
+      return _.map(listOfValues, (value) => {
+        return parseFloat(value)
+      })
+    })
+
+    if (forecastTimeSteps.length === data.length) {
+      let forecast = []
+      for (let i = 0; i < data.length; i++) {
+          forecast.push({
+            timestamp: forecastTimeSteps[i],
+            value: data[i]
+          })
+      }
+
+      let key = forecastData[i]['_attributes']['dwd:elementName']
+      forecastCollection[key] = forecast
+    }
+  }
+
+  return forecastCollection
 }
 
 async function readTimeseriesDataReport(csvBasePath, startTimestamp, endTimestamp, stationId) {
