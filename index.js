@@ -41,7 +41,7 @@ function deriveCsvFilePath(csvBasePath, type, timestamp, stationId) {
   } else if (type === 'MOSMIX_KMZ'){
     formatString = 'YYYYMMDDHH'
     contentType = 'MOSMIX'
-    extension = '.kml'
+    extension = '.kmz'
     subdir = 'mos'
   } else {
     formatString = 'YYYYMMDDHH'
@@ -118,8 +118,6 @@ function parseCsvFile(fileContent) {
 }
 
 async function parseKmzFile(fileContent) {
-  // Unzip the .kmz-file
-
   // Read the .kml-file
   let xml2jsOptions = {
     compact: true,
@@ -315,7 +313,17 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
   } else {
     dayTimestamp = moment.utc(startTimestamp).startOf('day').add(3, 'hours').valueOf()
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX_KMZ', dayTimestamp, stationId)
-    const fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
+
+    // Unzip the .kmz-file
+    const tmpFile = await tmp.file()
+    const execCommand = 'unzip -p ' + filePath + ' > ' + tmpFile.path
+    const statusOfExecCommand = await exec(execCommand)
+    const fileContent = await fs.readFile(tmpFile.path, {
+      encoding: 'utf8'
+    })
+    tmpFile.cleanup()
+
+    // const fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
     // console.log('fileContent: ', fileContent)
     result = await parseKmzFile(fileContent)
   }
@@ -328,11 +336,8 @@ async function main() {
   let startTimestamp = moment.utc([2018, 8, 12]).valueOf()
   let startTimestampCSV = moment.utc([2018, 8, 11]).valueOf()
   let basePath = '/home/moritz/tmp/crawler/weather/local_forecasts'
-  // let csvBasePath = path.join(basePath, 'poi')
-  // let mosBasePath = path.join(basePath, 'mos')
   let csvFile = path.join(basePath, 'poi', '2018091106', '01001-MOSMIX.csv')
-  // let kmzFile = path.join(basePath, '2018091103', '01001-MOSMIX.kmz')
-  let kmzFile = path.join(basePath, 'mos', '2018091203', '01001-MOSMIX.kml')
+  let kmzFile = path.join(basePath, 'mos', '2018091203', '01001-MOSMIX.kmz')
   console.log(csvFile)
   console.log(kmzFile)
 
@@ -342,15 +347,11 @@ async function main() {
     process.exit(1)
   }
 
-  // let kmzFileXML = await fs.readFile(kmzFile, 'utf8')
-  // let resultKMZ = await parseKmzFile(kmzFileXML)
   let resultKMZ = await readTimeseriesDataMosmix(basePath, startTimestamp, stationId)
   console.log(resultKMZ)
-  // console.log(util.inspect(resultKMZ, false, null))
 
   let resultCSV = await readTimeseriesDataMosmix(basePath, startTimestampCSV, stationId)
   console.log(resultCSV)
-  // console.log(util.inspect(resultCSV, false, null))
 }
 
 main()
