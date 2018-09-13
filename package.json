@@ -1,6 +1,6 @@
 {
   "name": "dwd-csv-helper",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Helper package for .csv- and .kmz-files downloaded by \"dwd_data_crawler\"",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   },
   "author": "Florian Wagner <florian.wagner@aut.uni-saarland.de>",
   "contributors": [
-      "Moritz Stüber <moritz.stueber@aut.uni-saarland.de>"
+    "Moritz Stüber <moritz.stueber@aut.uni-saarland.de>"
   ],
   "license": "ISC",
   "dependencies": {
