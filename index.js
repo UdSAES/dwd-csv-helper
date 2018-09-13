@@ -320,31 +320,6 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
   return result
 }
 
-async function main () {
-  let stationId = '01001' // Jan Mayen
-  let startTimestamp = moment.utc([2018, 8, 12]).valueOf()
-  let startTimestampCSV = moment.utc([2018, 8, 11]).valueOf()
-  let basePath = '/home/moritz/tmp/crawler/weather/local_forecasts'
-  let csvFile = path.join(basePath, 'poi', '2018091106', '01001-MOSMIX.csv')
-  let kmzFile = path.join(basePath, 'mos', '2018091203', '01001-MOSMIX.kmz')
-  console.log(csvFile)
-  console.log(kmzFile)
-
-  const exists = await fs.pathExists(kmzFile) && await fs.pathExists(csvFile)
-  if (!exists) {
-    console.log('files do not exist, I am outta here')
-    process.exit(1)
-  }
-
-  let resultKMZ = await readTimeseriesDataMosmix(basePath, startTimestamp, stationId)
-  console.log(resultKMZ)
-
-  let resultCSV = await readTimeseriesDataMosmix(basePath, startTimestampCSV, stationId)
-  console.log(resultCSV)
-}
-
-main()
-
 exports.parseCsvFile = parseCsvFile
 exports.parseKmlFile = parseKmlFile
 exports.deriveCsvFilePath = deriveCsvFilePath
