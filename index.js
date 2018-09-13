@@ -117,7 +117,7 @@ function parseCsvFile(fileContent) {
   return result
 }
 
-async function parseKmzFile(fileContent) {
+async function parseKmlFile(fileContent) {
   // Read the .kml-file
   let xml2jsOptions = {
     compact: true,
@@ -125,12 +125,6 @@ async function parseKmzFile(fileContent) {
     alwaysChildren: true
   }
   let kmzFileJS = await parser.xml2js(fileContent, xml2jsOptions)
-  // let kmzFileJSON = await parser.xml2json(fileContent, xml2jsOptions)
-  // await fs.writeFile(
-  //   path.join(__dirname, 'kmzFileJSONcompact.json'),
-  //   kmzFileJSON,
-  //   {encoding: 'utf8'}
-  // )
 
   // Build the expected object containing all the data
   let forecastCollection = {}
@@ -227,6 +221,7 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
   let partialTimeseries
   let result = {}
 
+  // Take care of the fact that DWD stopped providing .csv-files on 2018-09-17
   if (startTimestamp < moment.utc([2018, 8, 12,]).valueOf()) {
     // TODO: ensure that not only the 6 o'clock-run is used but the others as well
     dayTimestamp = moment.utc(startTimestamp).startOf('day').add(6, 'hours').valueOf()
@@ -311,6 +306,7 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
       })
     })
   } else {
+    // TODO: ensure that not only the 3 o'clock-run is used but the others as well
     dayTimestamp = moment.utc(startTimestamp).startOf('day').add(3, 'hours').valueOf()
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX_KMZ', dayTimestamp, stationId)
 
@@ -318,14 +314,10 @@ async function readTimeseriesDataMosmix(mosmixBasePath, startTimestamp, stationI
     const tmpFile = await tmp.file()
     const execCommand = 'unzip -p ' + filePath + ' > ' + tmpFile.path
     const statusOfExecCommand = await exec(execCommand)
-    const fileContent = await fs.readFile(tmpFile.path, {
-      encoding: 'utf8'
-    })
+    const fileContent = await fs.readFile(tmpFile.path, { encoding: 'utf8' })
     tmpFile.cleanup()
 
-    // const fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
-    // console.log('fileContent: ', fileContent)
-    result = await parseKmzFile(fileContent)
+    result = await parseKmlFile(fileContent)
   }
 
   return result
@@ -357,6 +349,7 @@ async function main() {
 main()
 
 exports.parseCsvFile = parseCsvFile
+exports.parseKmlFile = parseKmlFile
 exports.deriveCsvFilePath = deriveCsvFilePath
 exports.readTimeseriesDataReport = readTimeseriesDataReport
 exports.readTimeseriesDataMosmix = readTimeseriesDataMosmix
