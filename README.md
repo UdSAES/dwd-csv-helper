@@ -11,9 +11,7 @@ The package is being developed and maintained by the [Chair of Automation and En
 $ npm install dwd-csv-helper
 ```
 
-## Dependencies and Compatibility
-In addition to the dependencies defined in `package.json`, this software depends on the `unzip` command available on most Linux systems for extracting the .kml-file that gets parsed from the .kmz-file in which it gets delivered. This was introduced in commit [b4863e5350cbffaf86c88002808f82cf414d2063](https://github.com/UdSAES/dwd-csv-helper/commit/b4863e5350cbffaf86c88002808f82cf414d2063).
-
+## Compatibility
 Due to changes in the name and unit of some variables provided as part of the MOSMIX-forecast, the output of `readTimeseriesDataMosmix` was changed; this requires an update of `dwd_data_access` (compare the [commit message](https://github.com/UdSAES/dwd-csv-helper/commit/3af30bb1cfbbb52e2c439078634ac4db41bcd320))!
 
 ## Usage

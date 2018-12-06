@@ -21,8 +21,8 @@ const moment = require('moment')
 const path = require('path')
 const fs = require('fs-extra')
 const parser = require('xml-js')
-const exec = require('child-process-promise').exec
 const tmp = require('tmp-promise')
+const yauzl = require('yauzl-promise')
 
 const COLUMN_SEPARATOR = ';'
 
@@ -115,6 +115,22 @@ function parseCsvFile (fileContent) {
   return result
 }
 
+async function extractKmlFile (filePath) {
+  const tmpFile = await tmp.file()
+  let writeStream = fs.createWriteStream(tmpFile.path)
+
+  const zipFile = await yauzl.open(filePath)
+  const entry = await zipFile.readEntry()
+  const readStream = await entry.openReadStream()
+  readStream.pipe(writeStream)
+  await zipFile.close()
+
+  const kmlFileContent = await fs.readFile(tmpFile.path, { encoding: 'utf8' })
+  tmpFile.cleanup()
+
+  return kmlFileContent
+}
+
 async function parseKmlFile (fileContent) {
   // Read the .kml-file
   let xml2jsOptions = {
@@ -173,7 +189,7 @@ async function readTimeseriesDataReport (csvBasePath, startTimestamp, endTimesta
         encoding: 'utf8'
       })
     } catch (error) {
-      console.log(dayTimestamp, error)
+      console.log(dayTimestamp, error) // XXX: log via bunyan?
       dayTimestamp += 86400 * 1000
       continue
     }
@@ -307,13 +323,8 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
     dayTimestamp = moment.utc(startTimestamp).startOf('day').add(3, 'hours').valueOf()
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX_KMZ', dayTimestamp, stationId)
 
-    // Unzip the .kmz-file
-    const tmpFile = await tmp.file()
-    const execCommand = 'unzip -p ' + filePath + ' > ' + tmpFile.path
-    await exec(execCommand)
-    const fileContent = await fs.readFile(tmpFile.path, { encoding: 'utf8' })
-    tmpFile.cleanup()
-
+    // Unzip the .kmz-file, then parse it
+    const fileContent = await extractKmlFile(filePath)
     result = await parseKmlFile(fileContent)
   }
 
