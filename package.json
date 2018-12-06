@@ -4,7 +4,8 @@
   "description": "Helper package for .csv- and .kmz-files downloaded by \"dwd_data_crawler\"",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/standard/bin/cmd.js"
+    "lint": "./node_modules/standard/bin/cmd.js",
+    "lint-fix": "./node_modules/standard/bin/cmd.js --fix"
   },
   "repository": {
     "type": "git",
