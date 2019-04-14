@@ -324,7 +324,7 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX_KMZ', dayTimestamp, stationId)
 
     // Unzip the .kmz-file, then parse it
-    const fileContent = await extractKmlFile(filePath)
+    fileContent = await extractKmlFile(filePath)
     result = await parseKmlFile(fileContent)
   }
 
