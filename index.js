@@ -246,7 +246,7 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
     try {
       fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
     } catch (error) {
-      log.warn(error, `failed to read file ${filePath}`)
+      log.warn(error, `failed to read .csv-file ${filePath}`)
       throw error
     }
     partialTimeseries = parseCsvFile(fileContent)
@@ -333,7 +333,12 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX_KMZ', dayTimestamp, stationId)
 
     // Unzip the .kmz-file, then parse it
-    fileContent = await extractKmlFile(filePath)
+    try {
+      fileContent = await extractKmlFile(filePath)
+    } catch (error) {
+      log.warn(error, `failed to extract .kml-file ${filePath}`)
+      throw error
+    }
     result = await parseKmlFile(fileContent)
   }
 

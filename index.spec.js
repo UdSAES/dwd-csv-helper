@@ -28,12 +28,38 @@ describe('Unit Tests', function () {
       )
     })
 
+    it('should throw if the .csv-file does not exist', async function () {
+      let timeseries = null
+      try {
+        await readTimeseriesDataMosmix(
+        path.join(TEST_DATA_BASE, 'local_forecasts'),
+        moment.utc([2018, 8, 11, 3]).valueOf(),
+        'asdf'
+      )} catch (error) {
+        assert.instanceOf(error, Error, 'function does not return an instance of Error')
+        assert.equal(error.code, 'ENOENT')
+      }
+    })
+    
     it('should extract timeseries from .kmz-file', async function () {
       const timeseries = await readTimeseriesDataMosmix(
         path.join(TEST_DATA_BASE, 'local_forecasts'),
         moment.utc([2018, 8, 12, 3]).valueOf(), // 2018-09-12, 03:00 UTC in ms
         '01001'
       )
+    })
+
+    it('should throw if the .kmz-file does not exist', async function () {
+      let timeseries = null
+      try {
+        await readTimeseriesDataMosmix(
+        path.join(TEST_DATA_BASE, 'local_forecasts'),
+        moment.utc([2018, 8, 12, 3]).valueOf(),
+        'asdf'
+      )} catch (error) {
+        assert.instanceOf(error, Error, 'function does not return an instance of Error')
+        assert.equal(error.code, 'ENOENT')
+      }
     })
   })
 })
