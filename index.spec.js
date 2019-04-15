@@ -32,15 +32,16 @@ describe('Unit Tests', function () {
       let timeseries = null
       try {
         await readTimeseriesDataMosmix(
-        path.join(TEST_DATA_BASE, 'local_forecasts'),
-        moment.utc([2018, 8, 11, 3]).valueOf(),
-        'asdf'
-      )} catch (error) {
+          path.join(TEST_DATA_BASE, 'local_forecasts'),
+          moment.utc([2018, 8, 11, 3]).valueOf(),
+          'asdf'
+        )
+      } catch (error) {
         assert.instanceOf(error, Error, 'function does not return an instance of Error')
         assert.equal(error.code, 'ENOENT')
       }
     })
-    
+
     it('should extract timeseries from .kmz-file', async function () {
       const timeseries = await readTimeseriesDataMosmix(
         path.join(TEST_DATA_BASE, 'local_forecasts'),
@@ -53,10 +54,11 @@ describe('Unit Tests', function () {
       let timeseries = null
       try {
         await readTimeseriesDataMosmix(
-        path.join(TEST_DATA_BASE, 'local_forecasts'),
-        moment.utc([2018, 8, 12, 3]).valueOf(),
-        'asdf'
-      )} catch (error) {
+          path.join(TEST_DATA_BASE, 'local_forecasts'),
+          moment.utc([2018, 8, 12, 3]).valueOf(),
+          'asdf'
+        )
+      } catch (error) {
         assert.instanceOf(error, Error, 'function does not return an instance of Error')
         assert.equal(error.code, 'ENOENT')
       }
