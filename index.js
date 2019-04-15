@@ -26,6 +26,12 @@ const yauzl = require('yauzl-promise')
 
 const COLUMN_SEPARATOR = ';'
 
+const bunyan = require('bunyan')
+const log = bunyan.createLogger({
+  name: 'dwd-csv-handler',
+  serializers: bunyan.stdSerializers
+})
+
 function deriveCsvFilePath (csvBasePath, type, timestamp, stationId) {
   let formatString
   let contentType
@@ -185,11 +191,9 @@ async function readTimeseriesDataReport (csvBasePath, startTimestamp, endTimesta
     const filePath = deriveCsvFilePath(csvBasePath, 'REPORT', dayTimestamp, stationId)
     let fileContent
     try {
-      fileContent = await fs.readFile(filePath, {
-        encoding: 'utf8'
-      })
+      fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
     } catch (error) {
-      console.log(dayTimestamp, error) // XXX: log via bunyan?
+      log.warn(error, `failed to read file ${filePath}`)
       dayTimestamp += 86400 * 1000
       continue
     }
@@ -239,7 +243,12 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
     // TODO: ensure that not only the 6 o'clock-run is used but the others as well
     dayTimestamp = moment.utc(startTimestamp).startOf('day').add(6, 'hours').valueOf()
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX', dayTimestamp, stationId)
-    fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
+    try {
+      fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
+    } catch (error) {
+      log.warn(error, `failed to read file ${filePath}`)
+      throw error
+    }
     partialTimeseries = parseCsvFile(fileContent)
 
     const timestamps = partialTimeseries['timestamp']
