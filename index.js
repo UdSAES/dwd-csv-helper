@@ -90,7 +90,11 @@ function parseCsvFile (fileContent) {
     }
 
     _.forEach(columns, (value, index) => {
-      if (value === '---') {
+      if ( index < 2) {
+        // do not attempt to parse DD.MM.YY and HH:mm as float
+        values[index].push(value)
+      } else if (value === '---') {
+        // '---' is used to denote 'no data' in files by DWD
         values[index].push(null)
       } else {
         values[index].push(parseFloat(value.replace(',', '.')))
@@ -112,7 +116,7 @@ function parseCsvFile (fileContent) {
     if (index === 0) {
       result['timestamp'] = []
     }
-    const date = moment.utc(value, 'DD.MM.YYYY').valueOf()
+    const date = moment.utc(value, 'DD.MM.YY').valueOf()
 
     const time = moment.utc(values[1][index], 'HH:mm').year(1970).month(0).date(1).valueOf()
     result['timestamp'].push(date + time)
