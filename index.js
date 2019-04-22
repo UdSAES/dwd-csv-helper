@@ -90,7 +90,7 @@ function parseCsvFile (fileContent) {
     }
 
     _.forEach(columns, (value, index) => {
-      if ( index < 2) {
+      if (index < 2) {
         // do not attempt to parse DD.MM.YY and HH:mm as float
         values[index].push(value)
       } else if (value === '---') {
@@ -197,7 +197,7 @@ async function readTimeseriesDataReport (csvBasePath, startTimestamp, endTimesta
     try {
       fileContent = await fs.readFile(filePath, { encoding: 'utf8' })
     } catch (error) {
-      log.warn(error, `failed to read file ${filePath}`)
+      log.warn(error, `failed to read measurement data from file ${filePath}`)
       dayTimestamp += 86400 * 1000
       continue
     }
@@ -245,7 +245,7 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
   let result = {}
 
   // Take care of the fact that DWD stopped providing .csv-files on 2018-09-17
-  if (startTimestamp < moment.utc([2018, 8, 12]).valueOf()) {
+  if (startTimestamp < moment.utc('2018-09-12').valueOf()) {
     // TODO: ensure that not only the 6 o'clock-run is used but the others as well
     dayTimestamp = moment.utc(startTimestamp).startOf('day').add(6, 'hours').valueOf()
     filePath = deriveCsvFilePath(mosmixBasePath, 'MOSMIX', dayTimestamp, stationId)
@@ -342,7 +342,7 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
     try {
       fileContent = await extractKmlFile(filePath)
     } catch (error) {
-      log.warn(error, `failed to extract .kml-file ${filePath}`)
+      log.warn(error, `failed to extract the .kml-file from ${filePath}`)
       throw error
     }
     result = await parseKmlFile(fileContent)
