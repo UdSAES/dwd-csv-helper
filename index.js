@@ -204,13 +204,15 @@ async function readTimeseriesDataReport (csvBasePath, startTimestamp, endTimesta
 
     const partialTimeseries = parseCsvFile(fileContent)
 
+    // Trim to specified time interval and assemble object to return
     const timestamps = partialTimeseries['timestamp']
     _.forEach(partialTimeseries, (values, key) => {
       if (key === 'timestamp') {
         return
       }
 
-      if (_.isNil(result[key])) {
+      // Iff key not yet in result, make key property of result
+      if (!result.hasOwnProperty(key)) {
         result[key] = []
       }
 
