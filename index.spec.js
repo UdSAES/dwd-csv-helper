@@ -3,33 +3,120 @@
 'use strict'
 
 // Load modules
-const _ = require('lodash')
+const fs = require('fs-extra')
 const path = require('path')
 const it = require('mocha').it
 const describe = require('mocha').describe
-const before = require('mocha').before
 const assert = require('chai').assert
 const moment = require('moment')
 
 // Load functions to be tested
+const parseCsvFile = require('./index.js').parseCsvFile
+const readTimeseriesDataReport = require('./index.js').readTimeseriesDataReport
+const extractKmlFile = require('./index.js').extractKmlFile
 const readTimeseriesDataMosmix = require('./index.js').readTimeseriesDataMosmix
 
 // Configuration
 const TEST_DATA_BASE = path.join(__dirname, 'test', 'data')
+const REFERENCE_DATA_BASE = path.join(__dirname, 'test', 'expected')
 
 // Define unit tests
 describe('Unit Tests', function () {
+  // Disable timeouts: https://mochajs.org/#timeouts
+  this.timeout(0)
+
+  describe('function parseCsvFile', function () {
+    it('should parse the specified .csv-file', async function () {
+      const fileContent = await fs.readFile(
+        path.join(
+          TEST_DATA_BASE, 'weather_reports', 'poi',
+          '20190101',
+          '10704-BEOB.csv'
+        ),
+        { encoding: 'utf8' }
+      )
+
+      const parsedCsv = parseCsvFile(fileContent)
+
+      const expectedResult = await fs.readJson(
+        path.join(REFERENCE_DATA_BASE,
+          'parseCsvFile',
+          '20190101_10704-BEOB.json'),
+        { encoding: 'utf8' }
+      )
+
+      assert.deepEqual(parsedCsv, expectedResult)
+    })
+  })
+
+  describe('async function readTimeseriesDataReport', function () {
+    it('should extract timeseries from single .csv-file', async function () {
+      const timeseries = await readTimeseriesDataReport(
+        path.join(TEST_DATA_BASE, 'weather_reports'),
+        moment.utc([2019, 0, 1]).startOf('day').valueOf(),
+        moment.utc([2019, 0, 1]).endOf('day').valueOf(),
+        '10704'
+      )
+
+      const expectedResult = await fs.readJson(
+        path.join(REFERENCE_DATA_BASE,
+          'readTimeseriesDataReport',
+          'single',
+          '20190101_10704-BEOB.json'),
+        { encoding: 'utf8' }
+      )
+
+      assert.deepEqual(timeseries, expectedResult)
+    })
+    it('should extract timeseries from multiple .csv-files', async function () {
+      const timeseries = await readTimeseriesDataReport(
+        path.join(TEST_DATA_BASE, 'weather_reports'),
+        moment.utc('2018-11-19').startOf('day').valueOf(),
+        moment.utc('2018-11-20').endOf('day').valueOf(),
+        '10704'
+      )
+
+      // XXX add assertion
+    })
+  })
+
+  describe('async function extractKmlFile', function () {
+    it('should extract .kml-file from .kmz-file', async function () {
+      const fileContent = await extractKmlFile(
+        path.join(TEST_DATA_BASE, 'local_forecasts', 'mos', '2018091203', '01001-MOSMIX.kmz')
+      )
+
+      const expectedResult = await fs.readFile(
+        path.join(REFERENCE_DATA_BASE,
+          'extractKmlFile',
+          '2018091203_01001-MOSMIX.kml'),
+        { encoding: 'utf8' }
+      )
+
+      assert.deepEqual(fileContent, expectedResult)
+    })
+  })
+
   describe('async function readTimeseriesDataMosmix', function () {
     it('should extract timeseries from .csv-file', async function () {
       const timeseries = await readTimeseriesDataMosmix(
         path.join(TEST_DATA_BASE, 'local_forecasts'),
-        moment.utc([2018, 8, 11, 3]).valueOf(), // 2018-09-11, 03:00 UTC in ms
+        moment.utc('2018091106', 'YYYYMMDDHH').valueOf(),
         '01001'
       )
+
+      const expectedResult = await fs.readJson(
+        path.join(REFERENCE_DATA_BASE,
+          'readTimeseriesDataMosmix',
+          'csv-file',
+          '2018091106_01001-MOSMIX.json'),
+        { encoding: 'utf8' }
+      )
+
+      assert.deepEqual(timeseries, expectedResult)
     })
 
     it('should throw if the .csv-file does not exist', async function () {
-      let timeseries = null
       try {
         await readTimeseriesDataMosmix(
           path.join(TEST_DATA_BASE, 'local_forecasts'),
@@ -45,13 +132,22 @@ describe('Unit Tests', function () {
     it('should extract timeseries from .kmz-file', async function () {
       const timeseries = await readTimeseriesDataMosmix(
         path.join(TEST_DATA_BASE, 'local_forecasts'),
-        moment.utc([2018, 8, 12, 3]).valueOf(), // 2018-09-12, 03:00 UTC in ms
+        moment.utc('2018091203', 'YYYYMMDDHH').valueOf(),
         '01001'
       )
+
+      const expectedResult = await fs.readJson(
+        path.join(REFERENCE_DATA_BASE,
+          'readTimeseriesDataMosmix',
+          'kmz-file',
+          '2018091203_01001-MOSMIX.json'),
+        { encoding: 'utf8' }
+      )
+
+      assert.deepEqual(timeseries, expectedResult)
     })
 
     it('should throw if the .kmz-file does not exist', async function () {
-      let timeseries = null
       try {
         await readTimeseriesDataMosmix(
           path.join(TEST_DATA_BASE, 'local_forecasts'),

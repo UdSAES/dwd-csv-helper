@@ -353,6 +353,7 @@ async function readTimeseriesDataMosmix (mosmixBasePath, startTimestamp, station
 
 exports.parseCsvFile = parseCsvFile
 exports.parseKmlFile = parseKmlFile
+exports.extractKmlFile = extractKmlFile
 exports.deriveCsvFilePath = deriveCsvFilePath
 exports.readTimeseriesDataReport = readTimeseriesDataReport
 exports.readTimeseriesDataMosmix = readTimeseriesDataMosmix
