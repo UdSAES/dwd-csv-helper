@@ -141,7 +141,9 @@ describe('Unit Tests', function () {
           'readTimeseriesDataMosmix',
           'kmz-file',
           '2018091203_01001-MOSMIX.json'),
-        { encoding: 'utf8' }
+        { encoding: 'utf8', reviver: function (key, value) {
+          if (value === null) { return NaN } else { return value }
+        } }
       )
 
       assert.deepEqual(timeseries, expectedResult)

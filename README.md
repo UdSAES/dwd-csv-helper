@@ -110,3 +110,4 @@ main()
 
 ## Development
 There are some unit tests defined in `index.spec.js`. They mainly check whether the output of the major functions matches some expected output, i.e. their purpose is regression testing. The necessary test data is provided in `./test/data`, the expected output is stored in `./test/expected`, organized using directories matching the unit tests' structure.
+Note that, as a consequence, unit tests that pass do not guarantee that the function actually works as intended -- passing tests just indicate that "everything works as before".
