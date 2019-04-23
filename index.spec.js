@@ -80,7 +80,7 @@ describe('Unit Tests', function () {
     })
   })
 
-  describe('async function extractKmlFile', function () {
+  describe.skip('async function extractKmlFile', function () {
     it('should extract .kml-file from .kmz-file', async function () {
       const fileContent = await extractKmlFile(
         path.join(TEST_DATA_BASE, 'local_forecasts', 'mos', '2018091203', '01001-MOSMIX.kmz')
