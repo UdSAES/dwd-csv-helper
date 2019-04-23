@@ -1,6 +1,6 @@
 {
   "name": "dwd-csv-helper",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Helper package for .csv- and .kmz-files downloaded by \"dwd_data_crawler\"",
   "main": "index.js",
   "scripts": {
